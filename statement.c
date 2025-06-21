@@ -1,35 +1,32 @@
 #include "globals.h"
 
-void statement()
-{
+void statement() {
     int *a, *b;
 
-    switch (token)
-    {
-    case If:
+    if (token == If) {
         match(If);
         match('(');
         expression(Assign);
         match(')');
 
+
         *++text = JZ;
         b = ++text;
 
         statement();
-        if (token == Else)
-        {
+        if (token == Else) {
             match(Else);
 
-            *b = (int)(text + 3);
+
+            *b = (int) (text + 3);
             *++text = JMP;
             b = ++text;
 
             statement();
         }
 
-        *b = (int)(text + 1);
-        break;
-    case While:
+        *b = (int) (text + 1);
+    } else if (token == While) {
         match(While);
 
         a = text + 1;
@@ -44,37 +41,31 @@ void statement()
         statement();
 
         *++text = JMP;
-        *++text = (int)a;
-        *b = (int)(text + 1);
-        break;
-    case '{':
+        *++text = (int) a;
+        *b = (int) (text + 1);
+    } else if (token == '{') {
         match('{');
 
-        while (token != '}')
-        {
+        while (token != '}') {
             statement();
         }
 
         match('}');
-        break;
-    case Return:
+    } else if (token == Return) {
         match(Return);
 
-        if (token != ';')
-        {
+        if (token != ';') {
             expression(Assign);
         }
 
         match(';');
 
+
         *++text = LEV;
-        break;
-    case ';':
+    } else if (token == ';') {
         match(';');
-        break;
-    default:
+    } else {
         expression(Assign);
         match(';');
-        break;
     }
 }

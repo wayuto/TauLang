@@ -12,6 +12,8 @@
 
 #define int long long
 
+extern int debug;
+extern int assembly;
 extern int index_of_bp;
 extern int basetype;
 extern int expr_type;
@@ -26,8 +28,7 @@ extern char *data;
 extern char *src, *old_src;
 extern int *pc, *bp, *sp, ax, cycle;
 
-enum
-{
+enum {
     LEA,
     IMM,
     JMP,
@@ -68,8 +69,7 @@ enum
     EXIT
 };
 
-enum
-{
+enum {
     Num = 128,
     Fun,
     Sys,
@@ -109,8 +109,7 @@ enum
     Brak
 };
 
-enum
-{
+enum {
     Token,
     Hash,
     Name,
@@ -123,15 +122,13 @@ enum
     IdSize
 };
 
-enum
-{
+enum {
     CHAR,
     INT,
     PTR
 };
 
-struct identifier
-{
+struct identifier {
     int token;
     int hash;
     char *name;
@@ -144,16 +141,27 @@ struct identifier
 };
 
 extern int eval();
+
 extern void next();
+
 extern void expression();
+
 extern void match(int tk);
+
 extern void next();
+
 extern void statement();
+
 extern void global_declaration();
+
 extern void enum_declaration();
+
 extern void function_declaration();
+
 extern void function_body();
+
 extern void function_parameter();
+
 void error(const char *fmt, ...);
 
 #endif // GLOBALS_H

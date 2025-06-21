@@ -1,6 +1,5 @@
 #include "globals.h"
 
-
 void enum_declaration() {
     int i;
     i = 0;
@@ -35,6 +34,7 @@ void global_declaration() {
     int i;
 
     basetype = INT;
+
 
     if (token == Enum) {
         match(Enum);
@@ -111,7 +111,6 @@ void function_declaration() {
             current_id[Type] = current_id[BType];
             current_id[Value] = current_id[BValue];
         }
-
         current_id = current_id + IdSize;
     }
 }

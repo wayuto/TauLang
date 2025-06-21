@@ -8,6 +8,21 @@ void next() {
         ++src;
 
         if (token == '\n') {
+            if (assembly) {
+                printf("%d: %.*s", line, src - old_src, old_src);
+                old_src = src;
+
+                while (old_text < text) {
+                    printf("%8.4s", &"LEA ,IMM ,JMP ,CALL,JZ  ,JNZ ,ENT ,ADJ ,LEV ,LI  ,LC  ,SI  ,SC  ,PUSH,"
+                           "OR  ,XOR ,AND ,EQ  ,NE  ,LT  ,GT  ,LE  ,GE  ,SHL ,SHR ,ADD ,SUB ,MUL ,DIV ,MOD ,"
+                           "OPEN,READ,CLOS,PRTF,MALC,MSET,MCMP,EXIT"[*++old_text * 5]);
+
+                    if (*old_text <= ADJ)
+                        printf(" %d\n", *++old_text);
+                    else
+                        printf("\n");
+                }
+            }
             ++line;
         } else if (token == '#') {
             while (*src != 0 && *src != '\n') {
@@ -23,7 +38,6 @@ void next() {
                 src++;
             }
 
-
             current_id = symbols;
             while (current_id[Token]) {
                 if (current_id[Hash] == hash && !memcmp((char *) current_id[Name], last_pos, src - last_pos)) {
@@ -32,7 +46,6 @@ void next() {
                 }
                 current_id = current_id + IdSize;
             }
-
 
             current_id[Name] = (int) last_pos;
             current_id[Hash] = hash;
@@ -61,6 +74,15 @@ void next() {
 
             token = Num;
             return;
+        } else if (token == '/') {
+            if (*src == '/') {
+                while (*src != 0 && *src != '\n') {
+                    ++src;
+                }
+            } else {
+                token = Div;
+                return;
+            }
         } else if (token == '"' || token == '\'') {
             last_pos = data;
             while (*src != 0 && *src != token) {
@@ -86,15 +108,6 @@ void next() {
             }
 
             return;
-        } else if (token == '/') {
-            if (*src == '/') {
-                while (*src != 0 && *src != '\n') {
-                    ++src;
-                }
-            } else {
-                token = Div;
-                return;
-            }
         } else if (token == '=') {
             if (*src == '=') {
                 src++;

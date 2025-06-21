@@ -1,5 +1,7 @@
 #include "globals.h"
 
+int debug;
+int assembly;
 int index_of_bp;
 int basetype;
 int expr_type;
@@ -14,60 +16,58 @@ int *pc, *bp, *sp, ax, cycle;
 char *data;
 char *src, *old_src;
 
-void error(const char *fmt, ...)
-{
-    va_list args;
-    fprintf(stderr, "\033[1;31m[Error][Line %d]: ", line);
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-    fprintf(stderr, "\033[0m\n");
-    exit(-1);
-}
-
-void program()
-{
+void program() {
     next();
-    while (token > 0)
-    {
+    while (token > 0) {
         global_declaration();
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int i, fd;
     int *tmp;
 
     argc--;
     argv++;
 
+
+    if (argc > 0 && **argv == '-' && (*argv)[1] == 's') {
+        assembly = 1;
+        --argc;
+        ++argv;
+    }
+    if (argc > 0 && **argv == '-' && (*argv)[1] == 'd') {
+        debug = 1;
+        --argc;
+        ++argv;
+    }
+    if (argc < 1) {
+        printf("usage: xc [-s] [-d] file ...\n");
+    }
+
+    if ((fd = open(*argv, 0)) < 0) {
+        printf("could not open(%s)\n", *argv);
+        return -1;
+    }
+
     pool_size = 256 * 1024;
     line = 1;
 
-    if ((fd = open(*argv, 0)) < 0)
-    {
-        error("Cannot open file: %s", *argv);
+
+    if (!(text = malloc(pool_size))) {
+        printf("could not malloc(%d) for text area\n", pool_size);
         return -1;
     }
-    if (!(text = old_text = malloc(pool_size)))
-    {
-        error("Memory allocation failed for text area (%d bytes)", pool_size);
+    if (!(data = malloc(pool_size))) {
+        printf("could not malloc(%d) for data area\n", pool_size);
         return -1;
     }
-    if (!(data = malloc(pool_size)))
-    {
-        error("Memory allocation failed for data area (%d bytes)", pool_size);
+    if (!(stack = malloc(pool_size))) {
+        printf("could not malloc(%d) for stack area\n", pool_size);
         return -1;
     }
-    if (!(stack = malloc(pool_size)))
-    {
-        error("Memory allocation failed for stack area (%d bytes)", pool_size);
-        return -1;
-    }
-    if (!(symbols = malloc(pool_size)))
-    {
-        error("Memory allocation failed for symbol table (%d bytes)", pool_size);
+    if (!(symbols = malloc(pool_size))) {
+        printf("could not malloc(%d) for symbol table\n", pool_size);
         return -1;
     }
 
@@ -75,22 +75,22 @@ int main(int argc, char **argv)
     memset(data, 0, pool_size);
     memset(stack, 0, pool_size);
     memset(symbols, 0, pool_size);
-    bp = sp = (int *)((int)stack + pool_size);
-    ax = 0;
+
+    old_text = text;
 
     src = "char else enum if int return sizeof while "
-          "open read close printf malloc memset memcmp exit void main";
+            "open read close printf malloc memset memcmp exit void main";
+
 
     i = Char;
-    while (i <= While)
-    {
+    while (i <= While) {
         next();
         current_id[Token] = i++;
     }
 
+
     i = OPEN;
-    while (i <= EXIT)
-    {
+    while (i <= EXIT) {
         next();
         current_id[Class] = Sys;
         current_id[Type] = INT;
@@ -102,20 +102,12 @@ int main(int argc, char **argv)
     next();
     idmain = current_id;
 
-    if ((fd = open(*argv, 0)) < 0)
-    {
-        error("Cannot open file: %s", *argv);
+    if (!(src = old_src = malloc(pool_size))) {
+        printf("could not malloc(%d) for source area\n", pool_size);
         return -1;
     }
 
-    if (!(src = old_src = malloc(pool_size)))
-    {
-        error("Memory allocation failed for source area (%d bytes)", pool_size);
-        return -1;
-    }
-
-    if ((i = read(fd, src, pool_size - 1)) <= 0)
-    {
+    if ((i = read(fd, src, pool_size - 1)) <= 0) {
         printf("read() returned %d\n", i);
         return -1;
     }
@@ -124,19 +116,24 @@ int main(int argc, char **argv)
 
     program();
 
-    if (!(pc = (int *)idmain[Value]))
-    {
+    if (!(pc = (int *) idmain[Value])) {
         printf("main() not defined\n");
         return -1;
     }
 
-    sp = (int *)((int)stack + pool_size);
+
+    if (assembly) {
+        return 0;
+    }
+
+
+    sp = (int *) ((int) stack + pool_size);
     *--sp = EXIT;
     *--sp = PUSH;
     tmp = sp;
     *--sp = argc;
-    *--sp = (int)argv;
-    *--sp = (int)tmp;
+    *--sp = (int) argv;
+    *--sp = (int) tmp;
 
     return eval();
 }
